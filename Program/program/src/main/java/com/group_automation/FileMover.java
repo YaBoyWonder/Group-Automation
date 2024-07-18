@@ -91,6 +91,8 @@ public class FileMover {
         //Folder paths for extension-type
         if (extension.equals("png") || extension.equals("jpg") || extension.equals("jpeg")) {
             targetDir = desktopPath.resolve("Images");
+        } else if (extension.equals("zip")) {
+            targetDir = desktopPath.resolve("ZIP");
         } else if (extension.equals("pdf")) {
             targetDir = desktopPath.resolve("PDF");
         }
