@@ -7,37 +7,38 @@ import java.util.concurrent.TimeUnit;
 
 public class FileMover {
 
-    /**
-     * Monitors the Downloads folder for new files and moves them to the appropriate folder
-     */
     public static void startMonitoring() {
         try {
             // Path to the Downloads folder
             Path downloadDir = Paths.get(System.getProperty("user.home"), "Downloads");
 
+            // Create a WatchService
             WatchService watchService = FileSystems.getDefault().newWatchService();
             downloadDir.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
 
             System.out.println("Monitoring folder: " + downloadDir);
 
             while (true) {
-                WatchKey key = watchService.take(); 
+                WatchKey key = watchService.take(); // Wait for a key to be available
 
                 for (WatchEvent<?> event : key.pollEvents()) {
                     WatchEvent.Kind<?> kind = event.kind();
 
+                    // Check if a new file is created
                     if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                         Path filePath = downloadDir.resolve((Path) event.context());
-                        System.out.println("Downloaded file detected: " + filePath);
+                        System.out.println("New file detected: " + filePath);
 
+                        // Wait until the file is not being used
                         if (waitForFile(filePath)) {
+                            // Move the file based on its extension
                             moveFile(filePath);
                         } else {
                             System.out.println("Failed to move file: " + filePath);
                         }
                     }
                 }
-                key.reset(); 
+                key.reset(); // Reset the key and resume watching
             }
 
         } catch (IOException | InterruptedException e) {
@@ -45,11 +46,6 @@ public class FileMover {
         }
     }
 
-    /**
-     * Waits for the file to be completely downloaded
-     * @param filePath
-     * @return true if the file is ready to be moved, false otherwise
-     */
     private static boolean waitForFile(Path filePath) {
         int retryCount = 10;
         while (retryCount > 0) {
@@ -59,6 +55,7 @@ public class FileMover {
                     return true;
                 }
             } catch (IOException e) {
+                // File is still being written or used by another process
             }
 
             try {
@@ -72,30 +69,26 @@ public class FileMover {
         return false;
     }
 
-    /**
-     * Moves the file to the appropriate folder based on its extension
-     * @param filePath
-     */
     private static void moveFile(Path filePath) {
         String fileName = filePath.getFileName().toString();
         String extension = "";
 
-        //Obtaining the file extension 
+        // Get the file extension
         int i = fileName.lastIndexOf('.');
-        if (i > 0) 
+        if (i > 0) {
             extension = fileName.substring(i + 1).toLowerCase();
-        
+        }
 
+        // Define target directories on the Desktop
         Path desktopPath = Paths.get(System.getProperty("user.home"), "Desktop");
         Path targetDir = null;
-        //Folder paths for extension-type
-        if (extension.equals("png") || extension.equals("jpg") || extension.equals("jpeg")) {
-            targetDir = desktopPath.resolve("Images");
+        if (extension.equals("png")) {
+            targetDir = desktopPath.resolve("PNG");
         } else if (extension.equals("pdf")) {
             targetDir = desktopPath.resolve("PDF");
         }
 
-        //Moving the files to the target directory
+        // Move the file to the target directory
         if (targetDir != null) {
             try {
                 Files.createDirectories(targetDir); // Ensure the target directory exists
@@ -105,6 +98,8 @@ public class FileMover {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else { System.out.println("Unsupported file type has been downloaded: " + fileName);  }
+        } else {
+            System.out.println("Unsupported file type: " + fileName);
+        }
     }
 }
