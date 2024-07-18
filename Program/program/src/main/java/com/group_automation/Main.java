@@ -40,6 +40,6 @@ public class Main {
             }
         });
 
-        trayIcon.displayMessage("File Mover", "File Mover is running...", TrayIcon.MessageType.INFO);
+        trayIcon.displayMessage("File Mover", "File Mover is running!", TrayIcon.MessageType.INFO);
     }
 }
